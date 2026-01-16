@@ -49,6 +49,10 @@ class Gpio:
 
     def tr(self):
         while True:
+            if self.stopped:
+                self.line.set_value(0)  # Keep fan off
+                time.sleep(0.1)
+                continue
             self.line.set_value(1)
             time.sleep(self.value[0])
             self.line.set_value(0)
@@ -59,12 +63,17 @@ class Gpio:
         self.line.request(consumer='fan', type=gpiod.LINE_REQ_DIR_OUT)
         self.value = [period_s / 2, period_s / 2]
         self.period_s = period_s
+        self.stopped = False
         self.thread = threading.Thread(target=self.tr, daemon=True)
         self.thread.start()
 
     def write(self, duty):
-        self.value[1] = duty * self.period_s
-        self.value[0] = self.period_s - self.value[1]
+        if duty >= 1.0:
+            self.stopped = True
+        else:
+            self.stopped = False
+            self.value[1] = duty * self.period_s
+            self.value[0] = self.period_s - self.value[1]
 
 
 def read_temp():
@@ -75,7 +84,7 @@ def read_temp():
 
 def get_dc(cache={}):
     if misc.conf['run'].value == 0:
-        return 0.999
+        return 1.0  # Fan manually switched off
 
     if time.time() - cache.get('time', 0) > 60:
         cache['time'] = time.time()
@@ -87,7 +96,14 @@ def get_dc(cache={}):
 def change_dc(dc, cache={}):
     if dc != cache.get('dc'):
         cache['dc'] = dc
-        pin.write(dc)
+        if hasattr(pin, 'enable'):  # Hardware PWM
+            if dc >= 1.0:
+                pin.enable(False)  # Disable PWM completely when fan should be off
+            else:
+                pin.enable(True)
+                pin.write(dc)
+        else:  # GPIO PWM
+            pin.write(dc)
 
 
 def running():
@@ -99,6 +115,12 @@ def running():
         pin.enable(True)
     else:
         pin = Gpio(0.025)
+    
+    # Check initial state and disable PWM if fan should be off
+    initial_dc = get_dc()
+    if os.environ.get('HARDWARE_PWM') == '1' and initial_dc >= 1.0:
+        pin.enable(False)
+    
     while True:
         change_dc(get_dc())
         time.sleep(1)
