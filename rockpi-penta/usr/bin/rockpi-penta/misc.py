@@ -48,6 +48,43 @@ def get_cpu_temp():
     return temp
 
 
+
+
+def get_ssd_temp():
+    import subprocess
+    
+    drives_str = conf.get('fan', {}).get('drives', '')
+    
+    if drives_str.strip():
+        temps = []
+        drives = [f'/dev/{d.strip()}' for d in drives_str.split(',') if d.strip()]
+        
+        for drive in drives:
+            try:
+                result = subprocess.run(
+                    ['smartctl', '-A', drive],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                for line in result.stdout.split('\n'):
+                    if 'Temperature' in line or 'Airflow' in line:
+                        parts = line.split()
+                        if len(parts) >= 10:
+                            temps.append(int(parts[9]))
+                            break
+            except:
+                pass
+        
+        if temps:
+            t = max(temps)
+            if conf['oled']['f-temp']:
+                return "SSD Temp: {:.0f}°F".format(t * 1.8 + 32)
+            else:
+                return "SSD Temp: {:.1f}°C".format(t)
+    
+    return "SSD Temp: N/A"
+
 def read_conf():
     conf = defaultdict(dict)
 
