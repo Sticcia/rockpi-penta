@@ -191,7 +191,7 @@ def fan_temp2dc(t):
     for lv, dc in lv2dc.items():
         if t >= conf['fan'][lv]:
             return dc
-    return 0.999
+    return 1.0  # Fan off when below all thresholds
 
 
 def fan_switch():
