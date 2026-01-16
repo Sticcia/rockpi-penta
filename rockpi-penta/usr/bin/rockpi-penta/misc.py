@@ -59,6 +59,7 @@ def read_conf():
         conf['fan']['lv1'] = cfg.getfloat('fan', 'lv1')
         conf['fan']['lv2'] = cfg.getfloat('fan', 'lv2')
         conf['fan']['lv3'] = cfg.getfloat('fan', 'lv3')
+        conf['fan']['drives'] = cfg.get('fan', 'drives', fallback='')
         # key
         conf['key']['click'] = cfg.get('key', 'click')
         conf['key']['twice'] = cfg.get('key', 'twice')
@@ -73,6 +74,7 @@ def read_conf():
         conf['oled']['f-temp'] = cfg.getboolean('oled', 'f-temp')
     except Exception:
         traceback.print_exc()
+        conf['fan']['drives'] = ''
         # fan
         conf['fan']['lv0'] = 35
         conf['fan']['lv1'] = 40

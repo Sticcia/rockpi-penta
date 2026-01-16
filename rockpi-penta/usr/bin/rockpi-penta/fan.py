@@ -3,6 +3,7 @@ import os.path
 import time
 import traceback
 import threading
+import subprocess
 
 import gpiod
 
@@ -68,9 +69,40 @@ class Gpio:
 
 
 def read_temp():
+    import subprocess
+    
+    # Get configured drives list
+    drives_str = misc.conf.get('fan', {}).get('drives', '')
+    
+    # If drives are configured, try to read their temperatures
+    if drives_str.strip():
+        temps = []
+        drives = [f'/dev/{d.strip()}' for d in drives_str.split(',') if d.strip()]
+        
+        for drive in drives:
+            try:
+                result = subprocess.run(
+                    ['smartctl', '-A', drive],
+                    capture_output=True,
+                    text=True,
+                    timeout=2
+                )
+                for line in result.stdout.split('\n'):
+                    if 'Temperature' in line or 'Airflow' in line:
+                        parts = line.split()
+                        if len(parts) >= 10:
+                            temps.append(int(parts[9]))
+                            break
+            except:
+                pass
+        
+        # If we got any SSD temps, use the maximum
+        if temps:
+            return max(temps)
+    
+    # Fallback to CPU temperature
     with open('/sys/class/thermal/thermal_zone0/temp') as f:
-        t = int(f.read().strip()) / 1000.0
-    return t
+        return int(f.read().strip()) / 1000.0
 
 
 def get_dc(cache={}):
