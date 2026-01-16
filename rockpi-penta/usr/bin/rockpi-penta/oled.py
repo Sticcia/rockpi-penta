@@ -84,14 +84,18 @@ def gen_pages():
     pages = {
         0: [
             {'xy': (0, -2), 'text': misc.get_info('up'), 'fill': 255, 'font': font['11']},
-            {'xy': (0, 10), 'text': misc.get_cpu_temp(), 'fill': 255, 'font': font['11']},
-            {'xy': (0, 21), 'text': misc.get_info('ip'), 'fill': 255, 'font': font['11']},
+            {'xy': (0, 10), 'text': misc.get_info('ip'), 'fill': 255, 'font': font['11']},
+            {'xy': (0, 21), 'text': misc.get_info('disk'), 'fill': 255, 'font': font['11']},
         ],
         1: [
             {'xy': (0, 2), 'text': misc.get_info('cpu'), 'fill': 255, 'font': font['12']},
             {'xy': (0, 18), 'text': misc.get_info('men'), 'fill': 255, 'font': font['12']},
         ],
-        2: put_disk_info()
+        2: put_disk_info(),
+        3: [
+            {'xy': (0, 2), 'text': misc.get_cpu_temp(), 'fill': 255, 'font': font['12']},
+            {'xy': (0, 18), 'text': misc.get_ssd_temp(), 'fill': 255, 'font': font['12']},
+        ]
     }
 
     return pages
