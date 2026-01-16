@@ -118,7 +118,7 @@ def get_dc(cache={}):
     if misc.conf['run'].value == 0:
         return 1.0  # Fan manually switched off
 
-    if time.time() - cache.get('time', 0) > 60:
+    if time.time() - cache.get('time', 0) > misc.conf.get('fan', {}).get('check_interval', 60):
         cache['time'] = time.time()
         cache['dc'] = misc.fan_temp2dc(read_temp())
 
